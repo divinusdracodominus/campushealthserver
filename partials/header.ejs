@@ -1,0 +1,7 @@
+<div id="header" class="header">
+    <script> var exports = {}; </script>
+    <script src="index.js"></script>
+    <% for (var i = 0; i < headerbtns.length; i++) { %>
+        <button onclick="displayEvent({ title: 'hello world' })" class="headerbtn"> <%= headerbtns[i].text %> </button>
+    <% } %>
+</div>

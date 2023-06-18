@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model attendance {
+  participantid  String?         @db.Uuid
+  instanceid     String?         @db.Uuid
+  status         String?         @db.VarChar(10)
+  id             String          @id @db.Uuid
+  eventinstances eventinstances? @relation(fields: [instanceid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  participants   participants?   @relation(fields: [participantid], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "attendance_studentid_fkey")
+}
+
+model eventinstances {
+  id         String       @id @db.Uuid
+  eventid    String?      @db.Uuid
+  date       DateTime?    @db.Date
+  attendance attendance[]
+  events     events?      @relation(fields: [eventid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model eventrel {
+  id     String @id @db.Uuid
+  source String @db.VarChar(50)
+  key    String @db.VarChar(40)
+  events events @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model events {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String           @db.VarChar(100)
+  organizer         String?          @db.VarChar(50)
+  description       String?          @db.VarChar(200)
+  repeats           Boolean?         @default(false)
+  repitition        String?          @default("none") @db.VarChar(20)
+  days_of_week      String[]         @db.VarChar(20)
+  image_url         String?          @db.VarChar(100)
+  color             String?          @db.VarChar(10)
+  image_description String?          @db.VarChar(200)
+  eventinstances    eventinstances[]
+  eventrel          eventrel?
+}
+
+model participants {
+  id             String       @id(map: "students_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name     String?      @db.VarChar(20)
+  last_name      String?      @db.VarChar(20)
+  email          String?      @db.VarChar(40)
+  participant_id Int          @default(autoincrement())
+  attendance     attendance[]
+}
+
+model smsdata {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  body         String?   @db.VarChar(5000)
+  thread_id    Int
+  date_sent    BigInt?
+  date         BigInt?
+  address      String?   @db.VarChar(16)
+  metadata_id  String?   @db.Uuid
+  inbound      Boolean
+  platform_id  Int?      @unique
+  recipient_id String?   @db.VarChar(100)
+  minute       String?   @db.VarChar(20)
+  metadata     metadata? @relation(fields: [metadata_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "smsdata_metadata_fkey")
+
+  @@unique([date, thread_id, body], map: "unique_date_thread_id_body")
+  @@index([date])
+}
+
+model appusageevents {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  package_name  String?   @db.VarChar(75)
+  date          BigInt?
+  kind          String?   @db.VarChar(50)
+  metadata_id   String?   @db.Uuid
+  platform_type Int?
+  minute        String?   @db.VarChar(20)
+  metadata      metadata? @relation(fields: [metadata_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([date, package_name, platform_type], map: "unique_appusage_data")
+  @@index([date], map: "usageevents_date_idx")
+}
+
+model calendarentries {
+  id                 String   @id @db.Uuid
+  title              String?  @db.VarChar(100)
+  description        String?  @db.VarChar(200)
+  metadata           String?  @db.Uuid
+  owneraccount       String?  @db.VarChar(100)
+  eventlocation      String?  @db.VarChar(100)
+  selfattendeestatus Boolean?
+}
+
+model calldata {
+  id           String    @id @db.Uuid
+  metadata_id  String?   @db.Uuid
+  date         BigInt?
+  duration     Int?
+  recipiend_id String?   @db.Uuid
+  metadata     metadata? @relation(fields: [metadata_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "calldata_metadata_fkey")
+}
+
+model metadata {
+  id             String           @id(map: "smsmeta_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participant_id String?          @db.Uuid
+  device_id      String?          @db.Uuid
+  appusageevents appusageevents[]
+  calldata       calldata[]
+  smsdata        smsdata[]
+}

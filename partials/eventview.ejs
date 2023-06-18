@@ -1,0 +1,18 @@
+<script>
+    var eventid = <%= event.id %>
+    function loadEvent() {
+        location.replace('/ui/events/' + eventid);
+    }
+</script>
+<script src="index.js">
+    
+</script>
+<div class="eventview" onclick="loadEvent()")>
+    <img class="eventimage" src=<%= event.image_url %>/>
+    <h3 class="eventtitle">
+        <%= event.title %>
+    </h3>
+    <p class="eventdescription">
+        <%= event.description %>
+    </p>
+</div>
